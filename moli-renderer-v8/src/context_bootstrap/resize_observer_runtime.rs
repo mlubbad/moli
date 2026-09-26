@@ -526,9 +526,6 @@ fn for_each_resize_observation<'s, 'i>(
             (content_width * device_scale).round(),
             (content_height * device_scale).round(),
         );
-        let content_box_size = content_size;
-        let border_box_size = border_size;
-        let device_pixel_content_box_size = device_size;
         let observed_size = match entry
             .record
             .and_then(|record| observed_record_box(scope, record))
@@ -552,9 +549,9 @@ fn for_each_resize_observation<'s, 'i>(
                 entry: ResizeObserverEntryData {
                     target: entry.target,
                     content_rect: rect,
-                    content_box_size,
-                    border_box_size,
-                    device_pixel_content_box_size,
+                    content_box_size: content_size,
+                    border_box_size: border_size,
+                    device_pixel_content_box_size: device_size,
                 },
             },
         );
