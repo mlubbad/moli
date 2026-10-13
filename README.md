@@ -280,7 +280,7 @@ enabled by default:
 | --- | --- |
 | Default | `LayoutPolicy::Mock` — deterministic geometry in a compatible format, with no real layout or paint |
 | `--layout` | `LayoutPolicy::OnDemand` — real layout, geometry, hit-testing, coordinate input, screenshots, screencast |
-| `--realtime` | Experimental `LayoutPolicy::Realtime` — current geometry and rendering callbacks with pixels produced on demand |
+| `--realtime` | Experimental `LayoutPolicy::Realtime` — current geometry, rendering callbacks and immediate wheel input; pixels remain demand-driven |
 | `--resource` | Fetch all optional visual/media resource families |
 | `--image`, `--font`, `--audio`, `--video`, `--media`, `--text-track` | Enable one specific optional resource family |
 | `--profile-dir`, `--http-cache-dir`, `--cookie` | Selectively enable the persistence required by the workload |
@@ -297,14 +297,22 @@ while a changed token triggers one fresh frame. Paint results are never reused.
 `--realtime` (or `MOLI_REALTIME=true`) uses the same layout backend and keeps
 geometry current when scripts read it or coordinates are hit-tested. It also
 advances Window animation-frame callbacks, ResizeObserver and IntersectionObserver
-without requiring screenshots. Rendering opportunities run while the page has
-pending rendering work. Each refresh builds a complete layout and releases its
-working tree after publishing current geometry. Coordinate input uses current
-geometry at dispatch, including wheel events from the existing action window.
+without requiring screenshots. Pending work shares rendering opportunities;
+an idle page does not continuously rebuild layout. Realtime can retain per-document
+construction boxes, child/source mappings, prepared inline text and eligible
+measurement and inline-layout results across passes. Pass-local numeric scratch
+is released after each pass. Paint and raster output remain demand-driven,
+without a cross-frame paint cache. Mock and OnDemand do not allocate these
+Realtime working sets.
+Realtime wheel input completes each event through its handler, default action
+and microtasks; the other modes retain their existing wheel batching window.
 
-Both `fetch` and `serve` accept the flag. `--realtime` takes precedence over
-`--layout`. Enable optional resources with `--image --font` or `--resource`.
-Enable native scrollbars with `--scrollbars`.
+Both `fetch` and `serve` accept the flag; it takes precedence when combined with
+`--layout`. Optional resources remain independent: add `--image --font` or
+`--resource` when needed. Native scrollbars remain opt-in with `--scrollbars`.
+The mode is experimental: the core pipeline has regression coverage, while
+broader observer/frame compatibility, print-specific resource integration
+and release performance validation remain in progress.
 
 ## Architecture
 

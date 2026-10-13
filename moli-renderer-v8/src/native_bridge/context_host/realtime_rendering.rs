@@ -92,6 +92,9 @@ impl PageScriptHost {
         debug_assert_eq!(retired.local_window_id, current.local_window_id);
         let retired = WindowDocumentOwner::Frame(retired);
         let current = WindowDocumentOwner::Frame(current);
+        // Callback residence can follow document.open(), but computation
+        // inputs belong to the retired exact Document and must start cold.
+        self.retire_realtime_layout_working_set_owner(retired);
         state.environment.borrow_mut().rebind(retired, current);
         self.rebind_realtime_font_readiness(retired, current);
         self.rebind_realtime_rendering_events(retired, current);
@@ -123,6 +126,7 @@ impl PageScriptHost {
             return;
         }
         self.retire_realtime_animation_frame_document(retired);
+        self.retire_realtime_layout_working_set_owner(retired);
         self.retire_realtime_font_readiness(retired);
         if let Some(state) = &self.realtime_layout_state {
             state
@@ -136,6 +140,36 @@ impl PageScriptHost {
         }
         crate::observer_runtime::retire_realtime_resize_observer_document(self, retired);
         self.refresh_realtime_rendering_opportunity();
+    }
+
+    #[cfg(test)]
+    pub(crate) fn realtime_frame_is_idle_for_test(&self) -> bool {
+        self.realtime_layout_state.as_ref().is_some_and(|state| {
+            let frame = state.frame.borrow();
+            frame.is_idle() && !frame.source_requested
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn realtime_frame_snapshot_for_test(&self) -> Option<String> {
+        let state = self.realtime_layout_state.as_ref()?;
+        let frame = state.frame.borrow();
+        Some(format!(
+            "{:?}",
+            (
+                frame.next_id,
+                frame.pending,
+                frame.last_deadline,
+                frame.running.as_ref().map(|running| {
+                    (
+                        &running.ticket,
+                        &running.documents,
+                        running.sample_all_intersections,
+                    )
+                }),
+                frame.source_requested,
+            ),
+        ))
     }
 
     #[cfg(test)]
