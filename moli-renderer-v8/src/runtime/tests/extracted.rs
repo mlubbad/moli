@@ -11,6 +11,7 @@ mod owner_lifecycle;
 mod page_lifecycle_isolation;
 mod print_resources;
 mod realtime_environment_worlds;
+mod realtime_interaction_state;
 mod realtime_resources;
 mod runtime_scripts;
 #[cfg(feature = "devtools")]
