@@ -492,7 +492,7 @@ fn for_each_resize_observation<'s, 'i>(
     for entry in pending {
         let (metrics, dpr) = entry
             .handle
-            .and_then(|handle| geometry.get(&handle).copied())
+            .and_then(|handle| geometry.get(&handle).cloned())
             .and_then(|(metrics, dpr)| metrics.map(|metrics| (metrics, dpr)))
             .map(|(metrics, dpr)| (Some(metrics), dpr))
             .unwrap_or((None, 1.0));
