@@ -423,7 +423,7 @@ impl PageScriptHost {
         }
         self.build_layout_pass_for_document_with_resources(
             expected.document,
-            request.with_frame_coverage(moli_layout::LayoutFrameCoverage::AllLayoutBoxes),
+            request,
             environment_override,
             None,
             Some(resources),
